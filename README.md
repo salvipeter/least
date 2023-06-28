@@ -1,5 +1,4 @@
-# least
-Least polynomial interpolation
+# Least polynomial interpolation
 
 Based on a paper by [de Boor and Ron](https://doi.org/10.1007/bf02571803); original Octave code by Stephen Mann.
 Uses [Eigen](https://eigen.tuxfamily.org) and my [geometry library](https://github.com/salvipeter/libgeom).
@@ -12,3 +11,28 @@ Usage:
 - `eval(xy)` evaluates the fitted polynomial at the given doman point.
 
 There are several tolerances - their meaning should be explained (TODO).
+
+## From the original README
+
+The Least is a polynomial approximation to exponential box splines.  Its
+main feature is to create a bi(multi)variate basis for a set of locations
+where the basis is *guaranteed to have an invertible Vandermonde* for the
+data locations.
+
+The Least creates a matrix, with one row per data point.  Each row is
+the Taylor expansion of the exponential function at the location of a
+data point.
+
+The Least then does Gaussian elimination by segments (degrees), where
+the next row chosen to reduce by is the one with largest normal in
+the lowest non-zero degree homogeneous polynomial.  This row is pivoted
+"to the top", the remaining rows reduced relative to this row, and the
+process repeated until all rows have been processed.  When a row is
+selected, the row is scaled so that the lowest degree homogeneous polynomial
+is normalized.
+
+After reduction, the Least basis is extracted by choosing the "Least"
+homogeneous polynomial for each row (this is where the name comes from).
+A Vandermonde matrix is constructed using this basis along with the
+data locations, the Vandermonde inverted and used to computed the coefficients
+to use for the interpolating polynomial.

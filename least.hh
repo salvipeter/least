@@ -2,7 +2,7 @@
 
 // Polynomial Least as described in
 //   C. de Boor, A. Ron: The least solution for the polynomial interpolation problem.
-//   Computer Sciences Technical Report #942, University of Wisconsin-Madison, 1990.
+//   Mathematische Zeitschrift, Vol. 210, pp. 347-378, 1992.
 // A more robust variation is described in
 //   K. Haller, S. Mann: Error sensitive multivariate polynomial interpolation.
 //   Technical Report CS-2021-01, University of Waterloo, 2021.
