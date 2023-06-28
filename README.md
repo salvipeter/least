@@ -9,8 +9,10 @@ Usage:
 - `fit(points, d)` fits a polynomial of at most degree `d` on the given 3D points. When it fails, Eigen throws an exception.
 - `fit(xy, z, d)` is the same, but the points are now separated to the 2D domain and scalar value part.
 - `eval(xy)` evaluates the fitted polynomial at the given doman point.
+- `evalBasis(xy)` evaluates the basis functions at the given domain point.
+- `setTolerances(e1, e2, e3)` sets the tolerances (see below - TODO).
 
-There are several tolerances - their meaning should be explained (TODO).
+The test program reads an OBJ file containing vertices, fits a polynomial on them, and outputs the surface over the axis-aligned bounding rectangle of the data points into `/tmp/test.obj`.
 
 ## From the original README
 
