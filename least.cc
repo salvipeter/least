@@ -107,7 +107,7 @@ static DoubleMatrix constructBasis(const Point2DVector &xy, size_t max_degree,
         row++;
     }
 
-    degree = 0; increment = 0;
+    degree = 0;
     for (size_t i = 0; i < n; ++i) {
         size_t start;
         while (true) {
