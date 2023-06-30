@@ -55,7 +55,9 @@ int main(int argc, char **argv) {
 
     std::cout << "Region: (" << min << ") - (" << max << ")" << std::endl;
     Least l;
+    l.setTolerances(1e-15, 1e-7);
     l.fit(points, degree);
+    std::cout << "Fit complete. Writing to /tmp/test.obj..." << std::endl;
 
     {
         std::ofstream f("/tmp/test.obj");

@@ -8,18 +8,20 @@ using namespace Geometry;
 using EigenMap = const Eigen::Map<const Eigen::VectorXd>;
 using EigenMutMap = Eigen::Map<Eigen::VectorXd>;
 
+inline static Eigen::VectorBlock<EigenMap> homopoly(const DoubleVector &v, size_t d) {
+    return EigenMap(&v[0], v.size()).segment(d * (d + 1) / 2, d + 1);
+}
+
 DoubleVector Least::evalBasis(const Point2D &p) const {
     size_t n = basis.size();
     DoubleVector v(n);
-    size_t d = 0;
+    size_t degree = 0;
     for (size_t i = 0; i < n; ++i) {
-        Eigen::VectorXd bf = EigenMap(&basis[i][0], basis[i].size()).segment(d*(d+1)/2, d + 1);
-        while (bf.norm() < tolerances[1]) {
-            d++;
-            bf = EigenMap(&basis[i][0], basis[i].size()).segment(d*(d+1)/2, d + 1);
-        }
-        for (size_t j = 0; j <= d; ++j)
-            v[i] += std::pow(p[0], d - j) * std::pow(p[1], j) * bf(j);
+        while (homopoly(basis[i], degree).norm() < tolerances[1])
+            degree++;
+        auto bf = homopoly(basis[i], degree);
+        for (size_t j = 0; j <= degree; ++j)
+            v[i] += std::pow(p[0], degree - j) * std::pow(p[1], j) * bf(j);
     }
     return v;
 }
@@ -35,43 +37,41 @@ static Eigen::MatrixXd vandermonde(const Least &least, const Point2DVector &xy) 
 }
 
 static size_t binomial(size_t n, size_t k) {
-  if (k > n)
-    return 0;
-  size_t result = 1;
-  for (size_t d = 1; d <= k; ++d, --n)
-    result = result * n / d;
-  return result;
+    if (k > n)
+        return 0;
+    size_t result = 1;
+    for (size_t d = 1; d <= k; ++d, --n)
+        result = result * n / d;
+    return result;
 }
 
-static size_t selectRow(const DoubleMatrix &M, size_t row, size_t &degree, double tol) {
+static size_t selectRow(const DoubleMatrix &M, size_t row, size_t &degree, double eps) {
     while (true) {
-        size_t start = degree * (degree + 1) / 2;
-        auto max_norm = EigenMap(&M[row][0], M[row].size()).segment(start, degree + 1).norm();
-        auto max_row = row;
+        auto max_norm = homopoly(M[row], degree).norm();
+        size_t max_row = row;
         for (size_t i = row + 1; i < M.size(); ++i) {
-            auto norm = EigenMap(&M[i][0], M[i].size()).segment(start, degree + 1).norm();
+            auto norm = homopoly(M[i], degree).norm();
             if (norm > max_norm) {
                 max_norm = norm;
                 max_row = i;
             }
         }
-        if (max_norm > tol)
+        if (max_norm > eps)
             return max_row;
         degree++;
     }
 }
 
 static void reduce(DoubleMatrix &M, size_t row, size_t degree) {
-    size_t n = M.size();
-    size_t start = degree * (degree + 1) / 2;
+    size_t n = M.size(), start = degree * (degree + 1) / 2;
     std::fill(M[row].begin(), M[row].begin() + start, 0.0);
-    Eigen::VectorXd v = EigenMap(&M[row][0], M[row].size()).segment(start, degree + 1);
+    Eigen::VectorXd v = homopoly(M[row], degree);
     double scale = 1.0 / v.norm();
-    for (auto &x : M[row])
-        x *= scale;
-    v = EigenMap(&M[row][0], M[row].size()).segment(start, degree + 1);
+    std::for_each(M[row].begin() + start, M[row].end(),
+                  [=](double &x) { x *= scale; });
+    v = homopoly(M[row], degree);
     for (size_t i = row + 1; i < n; ++i) {
-        auto v2 = EigenMap(&M[i][0], M[i].size()).segment(start, degree + 1);
+        auto v2 = homopoly(M[i], degree);
         auto sf = v.dot(v2) / v.squaredNorm();
         EigenMutMap(&M[i][0], M[i].size()) -= EigenMap(&M[row][0], M[row].size()) * sf;
         std::fill(M[i].begin(), M[i].begin() + start, 0.0);
@@ -79,7 +79,8 @@ static void reduce(DoubleMatrix &M, size_t row, size_t degree) {
 }
 
 static DoubleMatrix constructBasis(const Point2DVector &xy, size_t max_degree,
-        const std::array<double, 3> &tols) {
+                                   double eps, double tol) {
+    // Initial matrix - Taylor expansion of the exponential function ((x+y)^i / i!)
     size_t n = xy.size();
     DoubleMatrix M(n);
     for (size_t k = 0; k < n; ++k) {
@@ -89,34 +90,32 @@ static DoubleMatrix constructBasis(const Point2DVector &xy, size_t max_degree,
             fact *= i;
             for (size_t j = 0; j <= i; ++j)
                 M[k].push_back(std::pow(xy[k][0], i - j) * std::pow(xy[k][1], j)
-                        * binomial(i, j) / fact);
+                               * binomial(i, j) / fact);
         }
     }
 
-    size_t degree = 0, increment = 0, row = 0;
+    // Pivot and eliminate
+    size_t degree = 0, count = 0, row = 0;
     for (size_t i = 0; i < n; ++i) {
-        if (increment == degree + 1) {
+        if (count == degree + 1) {
             degree++;
-            increment = 0;
+            count = 0;
         } else
-            increment++;
-        size_t selected = selectRow(M, row, degree, tols[0]); // can change degree
+            count++;
+        size_t selected = selectRow(M, row, degree, eps); // can increase the degree
         if (selected != row)
             std::swap(M[row], M[selected]);
         reduce(M, row, degree);
         row++;
     }
 
+    // Set all other homogeneous polynomials to zero
+    // (not strictly necessary, as evalBasis() makes the same check)
     degree = 0;
     for (size_t i = 0; i < n; ++i) {
-        size_t start;
-        while (true) {
-            start = degree * (degree + 1) / 2;
-            if (EigenMap(&M[i][0], M[i].size()).segment(start, degree + 1).norm() > tols[2])
-                break;
+        while (homopoly(M[i], degree).norm() < tol)
             degree++;
-        }
-        std::fill(M[i].begin() + start + degree + 1, M[i].end(), 0.0);
+        std::fill(M[i].begin() + (degree + 1) * (degree + 2) / 2, M[i].end(), 0.0);
     }
     return M;
 }
@@ -124,14 +123,13 @@ static DoubleMatrix constructBasis(const Point2DVector &xy, size_t max_degree,
 
 // Public methods
 
-void Least::setTolerances(double small, double mid, double large) {
-    tolerances[0] = small;
-    tolerances[1] = mid;
-    tolerances[2] = large;
+void Least::setTolerances(double eps, double tol) {
+    tolerances[0] = eps;
+    tolerances[1] = tol;
 }
 
 void Least::fit(const Point2DVector &xy, const DoubleVector &z, size_t max_degree) {
-    basis = constructBasis(xy, max_degree, tolerances);
+    basis = constructBasis(xy, max_degree, tolerances[0], tolerances[1]);
     auto V = vandermonde(*this, xy);
     coeffs.resize(xy.size());
     EigenMutMap cmap(&coeffs[0], coeffs.size()); 
@@ -156,4 +154,3 @@ double Least::eval(const Point2D &p) const {
         z += coeffs[i] * b[i];
     return z;
 }
-
