@@ -14,9 +14,9 @@
 class Least {
 public:
     void setTolerances(double eps, double tol);
-    void fit(const Geometry::Point2DVector &xy, const Geometry::DoubleVector &z,
-             size_t max_degree);
-    void fit(const Geometry::PointVector &xyz, size_t max_degree);
+    size_t fit(const Geometry::Point2DVector &xy, const Geometry::DoubleVector &z,
+               size_t max_degree);
+    size_t fit(const Geometry::PointVector &xyz, size_t max_degree);
     Geometry::DoubleVector evalBasis(const Geometry::Point2D &p) const;
     double eval(const Geometry::Point2D &p) const;
 private:

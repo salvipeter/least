@@ -78,7 +78,7 @@ static void reduce(DoubleMatrix &M, size_t row, size_t degree) {
     }
 }
 
-static DoubleMatrix constructBasis(const Point2DVector &xy, size_t max_degree,
+static DoubleMatrix constructBasis(const Point2DVector &xy, size_t &max_degree,
                                    double eps, double tol) {
     // Initial matrix - Taylor expansion of the exponential function ((x+y)^i / i!)
     size_t n = xy.size();
@@ -111,11 +111,11 @@ static DoubleMatrix constructBasis(const Point2DVector &xy, size_t max_degree,
 
     // Set all other homogeneous polynomials to zero
     // (not strictly necessary, as evalBasis() makes the same check)
-    degree = 0;
+    max_degree = 0;
     for (size_t i = 0; i < n; ++i) {
-        while (homopoly(M[i], degree).norm() < tol)
-            degree++;
-        std::fill(M[i].begin() + (degree + 1) * (degree + 2) / 2, M[i].end(), 0.0);
+        while (homopoly(M[i], max_degree).norm() < tol)
+            max_degree++;
+        std::fill(M[i].begin() + (max_degree + 1) * (max_degree + 2) / 2, M[i].end(), 0.0);
     }
     return M;
 }
@@ -128,22 +128,23 @@ void Least::setTolerances(double eps, double tol) {
     tolerances[1] = tol;
 }
 
-void Least::fit(const Point2DVector &xy, const DoubleVector &z, size_t max_degree) {
+size_t Least::fit(const Point2DVector &xy, const DoubleVector &z, size_t max_degree) {
     basis = constructBasis(xy, max_degree, tolerances[0], tolerances[1]);
     auto V = vandermonde(*this, xy);
     coeffs.resize(xy.size());
     EigenMutMap cmap(&coeffs[0], coeffs.size()); 
     cmap = V.inverse() * EigenMap(&z[0], z.size());
+    return max_degree;
 }
 
-void Least::fit(const PointVector &xyz, size_t max_degree) {
+size_t Least::fit(const PointVector &xyz, size_t max_degree) {
     Point2DVector xy;
     DoubleVector z;
     for (const auto &p : xyz) {
         xy.emplace_back(p[0], p[1]);
         z.push_back(p[2]);
     }
-    fit(xy, z, max_degree);
+    return fit(xy, z, max_degree);
 }
 
 double Least::eval(const Point2D &p) const {

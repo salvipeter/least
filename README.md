@@ -6,7 +6,7 @@ Uses [Eigen](https://eigen.tuxfamily.org) and my [geometry library](https://gith
 Creates a bivariate polynomial of least degree interpolating known values.
 
 Usage:
-- `fit(points, d)` fits a polynomial of at most degree `d` on the given 3D points. When it fails, Eigen throws an exception.
+- `fit(points, d)` fits a polynomial of at most degree `d` on the given 3D points. When it fails, Eigen throws an exception. Returns the actual degree.
 - `fit(xy, z, d)` is the same, but the points are now separated to the 2D domain and scalar value part.
 - `eval(xy)` evaluates the fitted polynomial at the given doman point.
 - `evalBasis(xy)` evaluates the basis functions at the given domain point.
