@@ -10,10 +10,7 @@ Usage:
 - `fit(xy, z, d)` is the same, but the points are now separated to the 2D domain and scalar value part.
 - `eval(xy)` evaluates the fitted polynomial at the given doman point.
 - `evalBasis(xy)` evaluates the basis functions at the given domain point.
-- `setTolerances(eps, tol)` sets the following tolerances:
-  + `eps` (default: `1e-12`): a homogeneous polynomial with a larger norm can be pivoted
-    in the elimination phase
-  + `tol`: (default: `1e-8`): a homogeneous polynomial with a smaller norm is treated as zero
+- `setTolerance(tol)` sets the tolerance s.t. a homogeneous polynomial with a  norm larger than `tol` can be pivoted in the elimination phase (default: `1e-12`)
 
 The test program reads an OBJ file containing vertices, fits a polynomial on them, and outputs the surface over the axis-aligned bounding rectangle of the data points into `/tmp/test.obj`.
 

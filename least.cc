@@ -17,7 +17,7 @@ DoubleVector Least::evalBasis(const Point2D &p) const {
     DoubleVector v(n);
     size_t degree = 0;
     for (size_t i = 0; i < n; ++i) {
-        while (homopoly(basis[i], degree).norm() < tolerances[1])
+        while (homopoly(basis[i], degree).norm() < 0.5) // safer than == 0 or != 1
             degree++;
         auto bf = homopoly(basis[i], degree);
         for (size_t j = 0; j <= degree; ++j)
@@ -78,8 +78,7 @@ static void reduce(DoubleMatrix &M, size_t row, size_t degree) {
     }
 }
 
-static DoubleMatrix constructBasis(const Point2DVector &xy, size_t &max_degree,
-                                   double eps, double tol) {
+static DoubleMatrix constructBasis(const Point2DVector &xy, size_t &max_degree, double eps) {
     // Initial matrix - Taylor expansion of the exponential function ((x+y)^i / i!)
     size_t n = xy.size();
     DoubleMatrix M(n);
@@ -113,7 +112,7 @@ static DoubleMatrix constructBasis(const Point2DVector &xy, size_t &max_degree,
     // (not strictly necessary, as evalBasis() makes the same check)
     max_degree = 0;
     for (size_t i = 0; i < n; ++i) {
-        while (homopoly(M[i], max_degree).norm() < tol)
+        while (homopoly(M[i], max_degree).norm() < 0.5) // safer than == 0 or != 1
             max_degree++;
         std::fill(M[i].begin() + (max_degree + 1) * (max_degree + 2) / 2, M[i].end(), 0.0);
     }
@@ -123,13 +122,12 @@ static DoubleMatrix constructBasis(const Point2DVector &xy, size_t &max_degree,
 
 // Public methods
 
-void Least::setTolerances(double eps, double tol) {
-    tolerances[0] = eps;
-    tolerances[1] = tol;
+void Least::setTolerance(double tol) {
+    eps = tol;
 }
 
 size_t Least::fit(const Point2DVector &xy, const DoubleVector &z, size_t max_degree) {
-    basis = constructBasis(xy, max_degree, tolerances[0], tolerances[1]);
+    basis = constructBasis(xy, max_degree, eps);
     auto V = vandermonde(*this, xy);
     coeffs.resize(xy.size());
     EigenMutMap cmap(&coeffs[0], coeffs.size()); 

@@ -13,7 +13,7 @@
 
 class Least {
 public:
-    void setTolerances(double eps, double tol);
+    void setTolerance(double eps);
     size_t fit(const Geometry::Point2DVector &xy, const Geometry::DoubleVector &z,
                size_t max_degree);
     size_t fit(const Geometry::PointVector &xyz, size_t max_degree);
@@ -22,5 +22,5 @@ public:
 private:
     Geometry::DoubleMatrix basis;
     Geometry::DoubleVector coeffs;
-    std::array<double, 2> tolerances = { 1e-12, 1e-8 };
+    double eps = 1e-12;
 };
