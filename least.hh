@@ -14,13 +14,19 @@
 class Least {
 public:
     void setTolerance(double eps);
-    size_t fit(const Geometry::Point2DVector &xy, const Geometry::DoubleVector &z,
+    size_t fit(const Geometry::Point2DVector &xy, const std::vector<double> &z,
                size_t max_degree);
     size_t fit(const Geometry::PointVector &xyz, size_t max_degree);
-    Geometry::DoubleVector evalBasis(const Geometry::Point2D &p) const;
+    std::vector<double> evalBasis(const Geometry::Point2D &p) const;
     double eval(const Geometry::Point2D &p) const;
 private:
-    Geometry::DoubleMatrix basis;
-    Geometry::DoubleVector coeffs;
+    size_t constructBasis(const Geometry::Point2DVector &xy, size_t max_degree);
+
+    struct Homopoly {
+        size_t degree;
+        std::vector<double> values;
+    };
+    std::vector<Homopoly> basis;
+    std::vector<double> coeffs;
     double eps = 1e-12;
 };
