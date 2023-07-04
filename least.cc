@@ -98,7 +98,7 @@ static DoubleMatrix constructBasis(const Point2DVector &xy, size_t &max_degree, 
     for (size_t i = 0; i < n; ++i) {
         if (count == degree + 1) {
             degree++;
-            count = 0;
+            count = 1;
         } else
             count++;
         size_t selected = selectRow(M, row, degree, eps); // can increase the degree
