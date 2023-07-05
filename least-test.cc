@@ -6,11 +6,6 @@
 
 using namespace Geometry;
 
-inline Point3D ev(const Least &l, const Point2D &xy) {
-    double z = l.eval(xy);
-    return { xy[0], xy[1], z };
-}
-
 Vector3D normal(const std::array<Least, 6> &surface, const Point2D &xy) {
     Vector3D n = { -surface[1].eval(xy), -surface[2].eval(xy), 1 };
     if (n.normSqr() > 0)
@@ -50,7 +45,7 @@ void writeVTK(const Point2DVector &vertices, size_t resolution,
     f << "DATASET POLYDATA" << std::endl;
     f << "POINTS " << vertices.size() << " float" << std::endl;
     for (const auto &v : vertices)
-        f << ev(surface[0], v) << std::endl;
+        f << v[0] << ' ' << v[1] << ' ' << surface[0].eval(v) << std::endl;
     size_t n_poly = (resolution - 1) * (resolution - 1);
     f << "POLYGONS " << n_poly << ' ' << n_poly * 5 << std::endl;
     for (size_t j = 1; j < resolution; ++j)
