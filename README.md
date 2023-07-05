@@ -1,6 +1,7 @@
 # Least polynomial interpolation
 
-Based on a paper by [de Boor and Ron](https://doi.org/10.1007/bf02571803); original Octave code by Stephen Mann.
+Based on a paper by [de Boor and Ron](https://doi.org/10.1007/bf02571803)
+(see also [this one](https://doi.org/10.2307/2153210)); original Octave code by Stephen Mann.
 Uses [Eigen](https://eigen.tuxfamily.org) and my [geometry library](https://github.com/salvipeter/libgeom).
 
 Creates a bivariate polynomial of least degree interpolating known values.
@@ -10,9 +11,16 @@ Usage:
 - `fit(xy, z, d)` is the same, but the points are now separated to the 2D domain and scalar value part.
 - `eval(xy)` evaluates the fitted polynomial at the given doman point.
 - `evalBasis(xy)` evaluates the basis functions at the given domain point.
-- `setTolerance(tol)` sets the tolerance s.t. a homogeneous polynomial with a  norm larger than `tol` can be pivoted in the elimination phase (default: `1e-12`)
+- `setTolerance(tol)` sets the tolerance s.t. a homogeneous polynomial with a 
+   norm larger than `tol` can be pivoted in the elimination phase (default: `1e-12`).
+- `partialX()` and `partialY()` return a `Least` object representing the partial derivatives.
+- `polynomial()` returns a double array `c`, where `c[i][j]` is the coefficient of `x^i * y^j`
 
-The test program reads an OBJ file containing vertices, fits a polynomial on them, and outputs the surface over the axis-aligned bounding rectangle of the data points into `/tmp/test.obj`.
+The test program reads an OBJ file containing vertices, fits a polynomial on
+them, and outputs the surface over the axis-aligned bounding rectangle of the
+data points into `/tmp/test.vtk`, along with normal vectors and mean/Gaussian
+curvatures. Another file containing the same surface is written to
+`/tmp/test.obj`, evaluated by the polynomial representation.
 
 ## From the original README
 

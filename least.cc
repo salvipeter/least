@@ -146,3 +146,56 @@ double Least::eval(const Point2D &p) const {
         z += coeffs[i] * b[i];
     return z;
 }
+
+Least Least::partialX() const {
+    Least result;
+    result.eps = eps;
+    size_t count = 0, m = basis.size();
+    while (count < m && basis[count].degree == 0)
+        count++;
+    result.basis.resize(m - count);
+    result.coeffs.assign(coeffs.begin() + count, coeffs.end());
+    for (size_t i = count; i < m; ++i) {
+        const auto &b = basis[i];
+        auto &r = result.basis[i-count];
+        r.degree = b.degree - 1;
+        r.values.resize(b.degree);
+        for (size_t k = 0; k < b.degree; ++k)
+            r.values[k] = b.values[k] * (b.degree - k);
+    }
+    return result;
+}
+
+Least Least::partialY() const {
+    Least result;
+    result.eps = eps;
+    size_t count = 0, m = basis.size();
+    while (count < m && basis[count].degree == 0)
+        count++;
+    result.basis.resize(m - count);
+    result.coeffs.assign(coeffs.begin() + count, coeffs.end());
+    for (size_t i = count; i < m; ++i) {
+        const auto &b = basis[i];
+        auto &r = result.basis[i-count];
+        r.degree = b.degree - 1;
+        r.values.resize(b.degree);
+        for (size_t k = 0; k < b.degree; ++k)
+            r.values[k] = b.values[k+1] * (k + 1);
+    }
+    return result;
+}
+
+DoubleMatrix Least::polynomial() const {
+    size_t n = std::max_element(basis.begin(), basis.end(),
+            [](const Homopoly &a, const Homopoly &b) { return a.degree < b.degree; })->degree;
+    DoubleMatrix result(n + 1);
+    for (size_t k = 0; k <= n; ++k)
+        result[k].resize(n - k + 1);
+    for (size_t i = 0; i < basis.size(); ++i) {
+        size_t ni = basis[i].degree;
+        for (size_t k = 0; k <= ni; ++k)
+            result[ni-k][k] += basis[i].values[k] * coeffs[i];
+    }
+    return result;
+}
+
